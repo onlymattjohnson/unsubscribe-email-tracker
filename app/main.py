@@ -1,0 +1,67 @@
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.core import settings, get_db, log_event
+from app.core.exceptions import (
+    DatabaseConnectionError,
+    db_connection_exception_handler,
+    AuthenticationError,
+    auth_exception_handler,
+)
+
+# App Initialization
+app = FastAPI(
+    title="Unsubscribed Emails Tracker API",
+    version="1.0.0",
+)
+
+# Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # WARNING: Should be restricted in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Exception Handlers
+app.add_exception_handler(DatabaseConnectionError, db_connection_exception_handler)
+app.add_exception_handler(AuthenticationError, auth_exception_handler)
+
+# --- Events ---
+@app.on_event("startup")
+async def startup_event():
+    """Test database connection on startup."""
+    print("Application startup: testing database connection...")
+    try:
+        db = next(get_db())
+        db.execute(text("SELECT 1"))
+        print("Database connection successful.")
+        await log_event("api", "INFO", "Application started successfully.")
+    except Exception as e:
+        print(f"FATAL: Database connection failed on startup: {e}")
+        await log_event("api", "CRITICAL", f"Database connection failed on startup: {e}")
+        # Raising the exception here will stop the app from starting
+        raise DatabaseConnectionError("Could not connect to the database on startup.")
+    finally:
+        if 'db' in locals() and db:
+            db.close()
+
+
+# --- API Endpoints ---
+@app.get("/")
+async def root():
+    """Root endpoint for basic service status."""
+    return {"status": "ok", "service": "unsubscribed-emails-tracker"}
+
+
+@app.get("/health")
+async def health_check(db: Session = Depends(get_db)):
+    """Health check endpoint to verify service and database connectivity."""
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        raise DatabaseConnectionError(f"Health check failed: {e}")
