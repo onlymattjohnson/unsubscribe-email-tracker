@@ -1,7 +1,7 @@
-.PHONY: test format run migrate
+.PHONY: test format run migrate-create migrate-up migrate-down
 
 test:
-	pytest tests/
+	pytest
 
 format:
 	black app/ tests/
@@ -9,5 +9,12 @@ format:
 run:
 	uvicorn app.main:app --reload
 
-migrate:
+# Usage: make migrate-create m="Your message"
+migrate-create:
+	alembic revision --autogenerate -m "$(m)"
+
+migrate-up:
 	alembic upgrade head
+
+migrate-down:
+	alembic downgrade -1

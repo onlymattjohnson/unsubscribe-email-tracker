@@ -8,7 +8,7 @@ class Log(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(
-        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), index=True
     )
     source_app = Column(String, nullable=False)
     log_level = Column(String, nullable=False)

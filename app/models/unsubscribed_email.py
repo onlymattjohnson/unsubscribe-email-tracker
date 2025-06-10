@@ -7,7 +7,7 @@ class UnsubscribedEmail(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     sender_name = Column(String, nullable=False)
-    sender_email = Column(String, nullable=False)
+    sender_email = Column(String, nullable=False, index=True)
     unsub_method = Column(String, nullable=False)
     inserted_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
