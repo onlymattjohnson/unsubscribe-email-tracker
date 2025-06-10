@@ -13,20 +13,24 @@ from app.models import Log
 from .test_models import db_session
 
 @pytest.mark.asyncio
-async def test_log_to_database_success(db_session):
+async def test_log_to_database_success(db_session, mocker):
     """Test that a log is successfully written to the database."""
+    # Mock SessionLocal to return the test session
+    mocker.patch("app.core.logging.SessionLocal", return_value=db_session)
+
     await log_event(
         source_app="test_suite",
         log_level="INFO",
         message="Successful DB log.",
         details_json={"test_id": 1}
     )
+
     log = db_session.query(Log).first()
     assert log is not None
     assert log.source_app == "test_suite"
     assert log.message == "Successful DB log."
     assert log.details_json["test_id"] == 1
-
+    
 @pytest.mark.asyncio
 async def test_log_fallback_to_file(mocker, tmp_path):
     """Test that logs are written to a file when the database fails."""

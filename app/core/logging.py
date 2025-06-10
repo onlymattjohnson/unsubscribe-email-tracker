@@ -1,8 +1,9 @@
 import json
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any
+
 
 import httpx
 from sqlalchemy.orm import Session
@@ -43,7 +44,7 @@ async def _log_to_file(
 ):
     """Fallback to write log to a local file if DB fails."""
     log_record = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "source_app": source_app,
         "log_level": log_level,
         "message": message,
@@ -95,20 +96,30 @@ async def log_event(
     Main logging function. Tries to log to DB, falls back to file + alert.
     This function should never raise an exception.
     """
-    db = SessionLocal()
+    db = None
     try:
+        db = SessionLocal()
         await _log_to_database(
             db, source_app, log_level, message, details_json, inserted_by
         )
-    except Exception as e:
-        print(f"ERROR: Database logging failed. Falling back to file. Error: {e}")
-        # Capture the original message before it's lost
+    except Exception as db_error:
+        print(f"ERROR: Database logging failed. Falling back. Error: {db_error}")
         original_log_message = f"{log_level} | {source_app} | {message}"
-        # Fallback 1: Log to file
-        await _log_to_file(
-            source_app, log_level, message, details_json, inserted_by
-        )
-        # Fallback 2: Send alert
-        await _send_discord_alert(original_log_message, e)
+
+        # Fallback 1: Log to file (wrapped in its own try/except)
+        try:
+            await _log_to_file(
+                source_app, log_level, message, details_json, inserted_by
+            )
+        except Exception as file_error:
+            print(f"CRITICAL: Fallback logging to file also failed. Error: {file_error}")
+
+        # Fallback 2: Send alert (wrapped in its own try/except)
+        try:
+            await _send_discord_alert(original_log_message, db_error)
+        except Exception as alert_error:
+            print(f"CRITICAL: Fallback Discord alert also failed. Error: {alert_error}")
+
     finally:
-        db.close()
+        if db:
+            db.close()
