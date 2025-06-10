@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.core import get_db, log_event
+from app.core.middleware.logging_middleware import LoggingMiddleware
+from app.core.logging_config import setup_logging
 from app.core.exceptions import (
     DatabaseConnectionError, db_connection_exception_handler,
     AuthenticationError, auth_exception_handler,
@@ -15,8 +17,9 @@ from app.web.router import router as web_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # (Lifespan code remains the same as before)
-    # ...
+    setup_logging() 
+    logger.info("Starting up...")
+    
     print("Application startup: testing database connection...")
     db = None
     try:
@@ -34,6 +37,7 @@ async def lifespan(app: FastAPI):
     
     yield
     
+    logger.info("Shutting down...")
     print("Application shutdown.")
     await log_event("api", "INFO", "Application shutting down.")
 
@@ -46,6 +50,7 @@ app = FastAPI(
 
 # --- Middleware ---
 # NOTE: Order matters. Add CORS first.
+app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # WARNING: Should be restricted in production

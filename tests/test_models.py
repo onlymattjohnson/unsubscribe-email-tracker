@@ -1,34 +1,13 @@
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
-from app.core.database import Base
+# Path fix if needed
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from app.models import UnsubscribedEmail, Log
 
-# Use an in-memory SQLite database for fast, isolated tests.
-# This is great for model-level tests.
-# For API tests, we will use a separate test Postgres DB.
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-@pytest.fixture(scope="function")
-def db_session():
-    """
-    Pytest fixture to create a new database session for each test function.
-    It creates all tables, yields a session, and then drops all tables.
-    """
-    Base.metadata.create_all(bind=engine)
-    session = TestingSessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
-        Base.metadata.drop_all(bind=engine)
+# Note: The db_session fixture is now automatically provided by conftest.py
 
 def test_create_unsubscribed_email(db_session):
     """Test creating a valid UnsubscribedEmail instance."""
