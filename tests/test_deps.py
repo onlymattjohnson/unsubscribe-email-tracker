@@ -4,13 +4,14 @@ from app.api.deps import verify_token
 from app.core.config import settings
 
 # Create a minimal app for testing the dependency
-test_app = FastAPI()
+# Create a minimal app for testing the dependency
+app = FastAPI()
 
-@test_app.get("/secure-resource")
+@app.get("/secure-resource")
 async def secure_resource(token: str = Depends(verify_token)):
     return {"status": "ok", "token": token}
 
-client = TestClient(test_app)
+client = TestClient(app)
 
 def test_verify_token_success():
     headers = {"Authorization": f"Bearer {settings.API_TOKEN}"}

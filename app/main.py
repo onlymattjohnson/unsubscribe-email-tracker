@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -11,10 +12,37 @@ from app.core.exceptions import (
     auth_exception_handler,
 )
 
-# App Initialization
+# --- Lifespan Event Handler ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Code to run on startup
+    print("Application startup: testing database connection...")
+    db = None
+    try:
+        db = next(get_db())
+        db.execute(text("SELECT 1"))
+        print("Database connection successful.")
+        await log_event("api", "INFO", "Application started successfully.")
+    except Exception as e:
+        print(f"FATAL: Database connection failed on startup: {e}")
+        await log_event("api", "CRITICAL", f"Database connection failed on startup: {e}")
+        raise DatabaseConnectionError("Could not connect to the database on startup.")
+    finally:
+        if db:
+            db.close()
+    
+    yield
+    
+    # Code to run on shutdown
+    print("Application shutdown.")
+    await log_event("api", "INFO", "Application shutting down.")
+
+
+# App Initialization with lifespan handler
 app = FastAPI(
     title="Unsubscribed Emails Tracker API",
     version="1.0.0",
+    lifespan=lifespan, # <-- Use the new lifespan handler
 )
 
 # Middleware
@@ -29,25 +57,6 @@ app.add_middleware(
 # Exception Handlers
 app.add_exception_handler(DatabaseConnectionError, db_connection_exception_handler)
 app.add_exception_handler(AuthenticationError, auth_exception_handler)
-
-# --- Events ---
-@app.on_event("startup")
-async def startup_event():
-    """Test database connection on startup."""
-    print("Application startup: testing database connection...")
-    try:
-        db = next(get_db())
-        db.execute(text("SELECT 1"))
-        print("Database connection successful.")
-        await log_event("api", "INFO", "Application started successfully.")
-    except Exception as e:
-        print(f"FATAL: Database connection failed on startup: {e}")
-        await log_event("api", "CRITICAL", f"Database connection failed on startup: {e}")
-        # Raising the exception here will stop the app from starting
-        raise DatabaseConnectionError("Could not connect to the database on startup.")
-    finally:
-        if 'db' in locals() and db:
-            db.close()
 
 
 # --- API Endpoints ---
