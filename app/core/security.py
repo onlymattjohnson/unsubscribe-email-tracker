@@ -1,11 +1,12 @@
 import base64
 import secrets
+from typing import Callable
 
-from fastapi import Depends, HTTPException, status
-from starlette.authentication import AuthCredentials, SimpleUser
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseFunction
+from fastapi import Depends
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
+from starlette import status
 
 from app.api.deps import verify_token
 from app.core.config import settings
@@ -33,7 +34,7 @@ def verify_basic_auth(auth_header: str) -> bool:
 
 
 class BasicAuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: RequestResponseFunction) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         if not request.url.path.startswith("/web/"):
             return await call_next(request)
 

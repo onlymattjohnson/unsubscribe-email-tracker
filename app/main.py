@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware 
+from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.core import get_db, log_event
@@ -8,9 +10,8 @@ from app.core.exceptions import (
     AuthenticationError, auth_exception_handler,
 )
 from app.core.security import BasicAuthMiddleware, require_api_auth
-from app.api.v1 import router as api_v1_router
-from app.web import router as web_router
-
+from app.api.v1.router import router as api_v1_router
+from app.web.router import router as web_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,7 +45,14 @@ app = FastAPI(
 )
 
 # --- Middleware ---
-# NOTE: Order matters. Add custom middleware before routers.
+# NOTE: Order matters. Add CORS first.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # WARNING: Should be restricted in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.add_middleware(BasicAuthMiddleware)
 
 # --- Exception Handlers ---
@@ -57,6 +65,17 @@ def root():
     """Root endpoint for basic service status."""
     return {"status": "ok", "service": "unsubscribed-emails-tracker"}
 
+# Add the health check endpoint here to make it public
+@app.get("/api/v1/health", tags=["Health"])
+async def health_check(db: Session = Depends(get_db)):
+    """Health check endpoint to verify service and database connectivity."""
+    try:
+        # Note: using text() is important for SQLAlchemy 2.0
+        db.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        raise DatabaseConnectionError(f"Health check failed: {e}")
+    
 # API Router (all routes will be protected by require_api_auth)
 app.include_router(
     api_v1_router,
