@@ -1,21 +1,21 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 
-from app.core import settings, get_db, log_event
+from app.core import get_db, log_event
 from app.core.exceptions import (
-    DatabaseConnectionError,
-    db_connection_exception_handler,
-    AuthenticationError,
-    auth_exception_handler,
+    DatabaseConnectionError, db_connection_exception_handler,
+    AuthenticationError, auth_exception_handler,
 )
+from app.core.security import BasicAuthMiddleware, require_api_auth
+from app.api.v1 import router as api_v1_router
+from app.web import router as web_router
 
-# --- Lifespan Event Handler ---
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Code to run on startup
+    # (Lifespan code remains the same as before)
+    # ...
     print("Application startup: testing database connection...")
     db = None
     try:
@@ -33,44 +33,41 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    # Code to run on shutdown
     print("Application shutdown.")
     await log_event("api", "INFO", "Application shutting down.")
 
 
-# App Initialization with lifespan handler
 app = FastAPI(
-    title="Unsubscribed Emails Tracker API",
+    title="Unsubscribed Emails Tracker",
     version="1.0.0",
-    lifespan=lifespan, # <-- Use the new lifespan handler
+    lifespan=lifespan,
 )
 
-# Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # WARNING: Should be restricted in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- Middleware ---
+# NOTE: Order matters. Add custom middleware before routers.
+app.add_middleware(BasicAuthMiddleware)
 
-# Exception Handlers
+# --- Exception Handlers ---
 app.add_exception_handler(DatabaseConnectionError, db_connection_exception_handler)
 app.add_exception_handler(AuthenticationError, auth_exception_handler)
 
-
-# --- API Endpoints ---
+# --- Routers ---
 @app.get("/")
-async def root():
+def root():
     """Root endpoint for basic service status."""
     return {"status": "ok", "service": "unsubscribed-emails-tracker"}
 
+# API Router (all routes will be protected by require_api_auth)
+app.include_router(
+    api_v1_router,
+    prefix="/api/v1",
+    tags=["APIv1"],
+    dependencies=[require_api_auth]
+)
 
-@app.get("/health")
-async def health_check(db: Session = Depends(get_db)):
-    """Health check endpoint to verify service and database connectivity."""
-    try:
-        db.execute(text("SELECT 1"))
-        return {"status": "healthy", "database": "connected"}
-    except Exception as e:
-        raise DatabaseConnectionError(f"Health check failed: {e}")
+# Web UI Router (routes are protected by BasicAuthMiddleware)
+app.include_router(
+    web_router,
+    prefix="/web",
+    tags=["Web"]
+)
