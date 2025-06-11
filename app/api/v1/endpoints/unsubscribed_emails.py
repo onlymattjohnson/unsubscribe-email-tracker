@@ -1,3 +1,5 @@
+from datetime import datetime
+from typing import Literal, Optional
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
@@ -44,19 +46,31 @@ async def create_unsubscribed_email_entry(
 async def list_unsubscribed_email_entries(
     *,
     db: Session = Depends(get_db),
-    limit: int = Query(10, ge=1, le=100, description="Number of items to return"),
-    offset: int = Query(0, ge=0, description="Number of items to skip"),
+    # Pagination params
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    # Filter params
+    unsub_method: Optional[Literal["direct_link", "isp_level"]] = Query(None),
+    search: Optional[str] = Query(None, min_length=1, max_length=100),
+    date_from: Optional[datetime] = Query(None, description="ISO 8601 format: YYYY-MM-DDTHH:MM:SS"),
+    date_to: Optional[datetime] = Query(None, description="ISO 8601 format: YYYY-MM-DDTHH:MM:SS"),
+    # Auth
     token: str = Depends(require_api_auth),
 ):
     """
-    Retrieve a paginated list of unsubscribed email records.
+    Retrieve a paginated and filtered list of unsubscribed email records.
     """
-    items = crud.get_unsubscribed_emails(db=db, limit=limit, offset=offset)
-    total = crud.count_unsubscribed_emails(db=db)
+    items = crud.get_unsubscribed_emails(
+        db=db, limit=limit, offset=offset, unsub_method=unsub_method,
+        search=search, date_from=date_from, date_to=date_to
+    )
+    total = crud.count_unsubscribed_emails(
+        db=db, unsub_method=unsub_method, search=search,
+        date_from=date_from, date_to=date_to
+    )
+
+
     
     return schemas.UnsubscribedEmailList(
-        items=items,
-        total=total,
-        limit=limit,
-        offset=offset
+        items=items, total=total, limit=limit, offset=offset
     )

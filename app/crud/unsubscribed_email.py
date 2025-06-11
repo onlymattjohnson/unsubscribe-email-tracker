@@ -1,4 +1,7 @@
+from datetime import datetime
+from typing import Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from app.models.unsubscribed_email import UnsubscribedEmail
 from app.schemas.unsubscribed_email import UnsubscribedEmailCreate
@@ -17,20 +20,76 @@ def create_unsubscribed_email(db: Session, *, email_in: UnsubscribedEmailCreate)
     db.refresh(db_obj)
     return db_obj
 
-def get_unsubscribed_emails(db: Session, *, limit: int, offset: int) -> list[UnsubscribedEmail]:
+def get_unsubscribed_emails(
+    db: Session,
+    *,
+    limit: int,
+    offset: int,
+    unsub_method: Optional[str] = None,
+    search: Optional[str] = None,
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
+) -> list[UnsubscribedEmail]:
     """
-    Retrieves a list of unsubscribed emails with pagination.
+    Retrieves a filtered list of unsubscribed emails with pagination.
     """
+    query = db.query(UnsubscribedEmail)
+
+    if unsub_method:
+        query = query.filter(UnsubscribedEmail.unsub_method == unsub_method)
+    
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                UnsubscribedEmail.sender_name.ilike(search_term),
+                UnsubscribedEmail.sender_email.ilike(search_term),
+            )
+        )
+
+    if date_from:
+        query = query.filter(UnsubscribedEmail.inserted_at >= date_from)
+
+    if date_to:
+        query = query.filter(UnsubscribedEmail.inserted_at <= date_to)
+
     return (
-        db.query(UnsubscribedEmail)
-        .order_by(UnsubscribedEmail.inserted_at.desc(), UnsubscribedEmail.id.desc())
+        query.order_by(UnsubscribedEmail.inserted_at.desc(), UnsubscribedEmail.id.desc())
         .offset(offset)
         .limit(limit)
         .all()
     )
 
-def count_unsubscribed_emails(db: Session) -> int:
+
+def count_unsubscribed_emails(
+    db: Session,
+    *,
+    unsub_method: Optional[str] = None,
+    search: Optional[str] = None,
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
+) -> int:
     """
-    Counts the total number of unsubscribed email records.
+    Counts the total number of filtered unsubscribed email records.
     """
-    return db.query(UnsubscribedEmail).count()
+    query = db.query(UnsubscribedEmail)
+
+    if unsub_method:
+        query = query.filter(UnsubscribedEmail.unsub_method == unsub_method)
+    
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                UnsubscribedEmail.sender_name.ilike(search_term),
+                UnsubscribedEmail.sender_email.ilike(search_term),
+            )
+        )
+
+    if date_from:
+        query = query.filter(UnsubscribedEmail.inserted_at >= date_from)
+
+    if date_to:
+        query = query.filter(UnsubscribedEmail.inserted_at <= date_to)
+
+    return query.count()
