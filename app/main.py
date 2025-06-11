@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware 
@@ -12,8 +13,11 @@ from app.core.exceptions import (
     AuthenticationError, auth_exception_handler,
 )
 from app.core.security import BasicAuthMiddleware, require_api_auth
+from app.core.rate_limit import RateLimiter, RateLimitMiddleware, cleanup_task
 from app.api.v1.router import router as api_v1_router
 from app.web.router import router as web_router
+
+rate_limiter = RateLimiter()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,6 +38,9 @@ async def lifespan(app: FastAPI):
     finally:
         if db:
             db.close()
+
+    # Start the rate limiter cleanup task
+    cleanup_bg_task = asyncio.create_task(cleanup_task(rate_limiter))
     
     yield
     
@@ -41,6 +48,12 @@ async def lifespan(app: FastAPI):
     print("Application shutdown.")
     await log_event("api", "INFO", "Application shutting down.")
 
+    # Stop the cleanup task
+    cleanup_bg_task.cancel()
+    try:
+        await cleanup_bg_task
+    except asyncio.CancelledError:
+        print("Rate limiter cleanup task cancelled.")
 
 app = FastAPI(
     title="Unsubscribed Emails Tracker",
@@ -58,6 +71,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RateLimitMiddleware, limiter=rate_limiter)
 app.add_middleware(BasicAuthMiddleware)
 
 # --- Exception Handlers ---

@@ -12,3 +12,4 @@ pytest-asyncio
 pytest-mock
 pydantic-settings
 python-json-logger
+anyio

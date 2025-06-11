@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     DISCORD_WEBHOOK_URL: Optional[HttpUrl] = None
     BASIC_AUTH_USERNAME: str = "admin"
     BASIC_AUTH_PASSWORD: str = "password"
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS: int = 20
+    RATE_LIMIT_AUTH_REQUESTS: int = 100
+    RATE_LIMIT_TIMESCALE_SECONDS: int = 60 # 1 minute
 
     model_config = ConfigDict(
         env_file=".env",
