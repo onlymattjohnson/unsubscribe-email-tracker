@@ -100,7 +100,7 @@ app.include_router(
     api_v1_router,
     prefix="/api/v1",
     tags=["APIv1"],
-    dependencies=[require_api_auth]
+    dependencies=[Depends(require_api_auth)]
 )
 
 # Web UI Router (routes are protected by BasicAuthMiddleware)

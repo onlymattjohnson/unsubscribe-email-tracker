@@ -44,7 +44,8 @@ def test_create_invalid_unsub_method():
     payload["unsub_method"] = "telepathy"
     response = client.post(API_URL, headers=AUTH_HEADERS, json=payload)
     assert response.status_code == 422
-    assert "unexpected value; permitted: 'direct_link', 'isp_level'" in response.text
+    # Use the new Pydantic v2 error message
+    assert "Input should be 'direct_link' or 'isp_level'" in response.text
 
 def test_create_missing_sender_name():
     payload = VALID_PAYLOAD.copy()

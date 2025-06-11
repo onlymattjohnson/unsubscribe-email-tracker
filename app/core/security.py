@@ -12,7 +12,9 @@ from app.api.deps import verify_token
 from app.core.config import settings
 
 # --- API Authentication ---
-require_api_auth = Depends(verify_token)
+def require_api_auth(token: str = Depends(verify_token)):
+    """A simple wrapper dependency for API authentication."""
+    return token
 
 
 # --- Web UI Basic Authentication ---

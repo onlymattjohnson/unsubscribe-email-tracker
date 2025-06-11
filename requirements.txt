@@ -11,5 +11,6 @@ black
 pytest-asyncio
 pytest-mock
 pydantic-settings
+email-validator
 python-json-logger
 anyio
