@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from app.core import get_db, log_event
@@ -36,3 +36,27 @@ async def create_unsubscribed_email_entry(
     )
     
     return created_email
+
+@router.get(
+    "/",
+    response_model=schemas.UnsubscribedEmailList,
+)
+async def list_unsubscribed_email_entries(
+    *,
+    db: Session = Depends(get_db),
+    limit: int = Query(10, ge=1, le=100, description="Number of items to return"),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
+    token: str = Depends(require_api_auth),
+):
+    """
+    Retrieve a paginated list of unsubscribed email records.
+    """
+    items = crud.get_unsubscribed_emails(db=db, limit=limit, offset=offset)
+    total = crud.count_unsubscribed_emails(db=db)
+    
+    return schemas.UnsubscribedEmailList(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset
+    )

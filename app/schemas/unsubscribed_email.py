@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import List, Literal
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
@@ -18,3 +18,9 @@ class UnsubscribedEmailResponse(BaseModel):
     inserted_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class UnsubscribedEmailList(BaseModel):
+    items: List[UnsubscribedEmailResponse]
+    total: int
+    limit: int
+    offset: int
