@@ -1,4 +1,5 @@
 import pytest
+import time
 from fastapi.testclient import TestClient
 
 # Path fix might be needed
@@ -24,6 +25,10 @@ def db_session():
 @pytest.fixture(scope="function")
 def populate_db(db_session):
     """Fixture to create 25 test records and clean them up afterward."""
+    # Start by clearing any existing data to ensure a clean slate
+    db_session.query(UnsubscribedEmail).delete()
+    db_session.commit()
+
     created_emails = []
     for i in range(25):
         email = UnsubscribedEmail(
@@ -32,17 +37,17 @@ def populate_db(db_session):
             unsub_method="direct_link"
         )
         created_emails.append(email)
+        db_session.add(email)
+        db_session.commit() # Commit each one to get a unique timestamp
+        time.sleep(0.001) # Add a tiny delay
     
-    db_session.add_all(created_emails)
-    db_session.commit()
-    
-    # Reverse for easy checking, since API returns newest first
-    yield list(reversed(created_emails))
+    # The API will sort by desc, so the highest ID (24) will be first
+    yield created_emails
     
     # Cleanup
     db_session.query(UnsubscribedEmail).delete()
     db_session.commit()
-
+    
 def test_list_empty(db_session):
     # Ensure DB is empty for this test
     db_session.query(UnsubscribedEmail).delete()

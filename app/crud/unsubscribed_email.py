@@ -23,7 +23,7 @@ def get_unsubscribed_emails(db: Session, *, limit: int, offset: int) -> list[Uns
     """
     return (
         db.query(UnsubscribedEmail)
-        .order_by(UnsubscribedEmail.inserted_at.desc())
+        .order_by(UnsubscribedEmail.inserted_at.desc(), UnsubscribedEmail.id.desc())
         .offset(offset)
         .limit(limit)
         .all()
