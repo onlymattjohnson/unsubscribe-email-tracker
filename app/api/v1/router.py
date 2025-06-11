@@ -1,7 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from .endpoints import logging as logging_router
+from .endpoints import unsubscribed_emails
 
 router = APIRouter()
+
+# Include the unsubscribed_emails endpoint router
+router.include_router(
+    unsubscribed_emails.router, 
+    prefix="/unsubscribed_emails", 
+    tags=["Unsubscribed Emails"]
+)
 
 # Include other endpoint groups
 router.include_router(logging_router.router, prefix="/logs", tags=["Logging"])
