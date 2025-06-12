@@ -32,8 +32,19 @@ def test_list_view_empty_state(test_client: TestClient):
     assert "No Records Found" in soup.text
     assert soup.find("table") is None
 
-def test_list_view_first_page(test_client: TestClient, populated_db_for_web):
+
+def test_list_view_first_page(
+    test_client: TestClient, 
+    populated_db_for_web,
+    db_session: Session # <-- Add the db_session fixture here
+):
     """Test the first page of a populated list."""
+
+    # --- DEBUGGING STEP ---
+    count = db_session.query(UnsubscribedEmail).count()
+    print(f"\n--- Database count before request: {count} ---\n")
+    # --- END DEBUGGING ---
+
     response = test_client.get(LIST_URL, headers=AUTH_HEADERS)
     assert response.status_code == 200
     soup = BeautifulSoup(response.text, "html.parser")
@@ -44,9 +55,8 @@ def test_list_view_first_page(test_client: TestClient, populated_db_for_web):
 
     # Check pagination controls
     assert "Page 1 of 3" in soup.text
-    prev_link = soup.select_one('a[href="?page=0"]') # Should not exist or be disabled
+    prev_link = soup.select_one('a[href="?page=0"]')
     assert not prev_link or "disabled" in prev_link.parent.get("class", [])
-
 
 def test_list_view_second_page(test_client: TestClient, populated_db_for_web):
     """Test navigating to the second page."""

@@ -35,6 +35,10 @@ def get_unsubscribed_emails(
     """
     query = db.query(UnsubscribedEmail)
 
+    # --- DEBUGGING ---
+    print(f"\nCRUD ARGS: unsub_method={unsub_method}, search={search}\n")
+    # ---
+    
     if unsub_method:
         query = query.filter(UnsubscribedEmail.unsub_method == unsub_method)
     

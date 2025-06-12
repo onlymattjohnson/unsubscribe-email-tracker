@@ -1,5 +1,5 @@
 import math
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -17,15 +17,6 @@ router = APIRouter()
 async def web_root():
     """Redirects the root of the web UI to the main list page."""
     return RedirectResponse(url="/web/unsubscribed")
-
-@router.get("/unsubscribed")
-async def list_unsubscribed(
-    request: Request,
-    templates: Jinja2Templates = Depends(get_templates)
-):
-    """Displays the main page for unsubscribed emails (placeholder)."""
-    return templates.TemplateResponse(request=request, name="unsubscribed_list.html")
-
 
 # --- EXISTING TEST ROUTE ---
 @router.get("/test/protected")
