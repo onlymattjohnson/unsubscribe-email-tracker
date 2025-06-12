@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, logging
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware 
@@ -17,22 +17,24 @@ from app.core.rate_limit import RateLimiter, RateLimitMiddleware, cleanup_task
 from app.api.v1.router import router as api_v1_router
 from app.web.router import router as web_router
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 rate_limiter = RateLimiter()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging() 
-    logger.info("Starting up...")
     
-    print("Application startup: testing database connection...")
+    logger.info("Application startup: testing database connection...") # <-- This will now work
     db = None
     try:
         db = next(get_db())
         db.execute(text("SELECT 1"))
-        print("Database connection successful.")
+        logger.info("Database connection successful.") # <-- Update this too
         await log_event("api", "INFO", "Application started successfully.")
     except Exception as e:
-        print(f"FATAL: Database connection failed on startup: {e}")
+        logger.critical(f"Database connection failed on startup: {e}") # <-- Update to logger.critical
         await log_event("api", "CRITICAL", f"Database connection failed on startup: {e}")
         raise DatabaseConnectionError("Could not connect to the database on startup.")
     finally:
@@ -44,8 +46,7 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    logger.info("Shutting down...")
-    print("Application shutdown.")
+    logger.info("Application shutdown.")
     await log_event("api", "INFO", "Application shutting down.")
 
     # Stop the cleanup task

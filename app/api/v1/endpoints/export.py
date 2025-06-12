@@ -26,18 +26,28 @@ async def export_unsubscribed_email_entries(
     """
     Export filtered unsubscribed email records as a CSV or JSON file.
     """
-    data_iterator = crud.get_all_unsubscribed_emails(
-        db=db, unsub_method=unsub_method, search=search,
-        date_from=date_from, date_to=date_to
+    # Use the existing paginated GET function with a high limit to get all records.
+    # This is a pragmatic simplification for non-massive datasets.
+    all_items = crud.get_unsubscribed_emails(
+        db=db, 
+        limit=1_000_000, # A very large number to act as "no limit"
+        offset=0, 
+        unsub_method=unsub_method,
+        search=search, 
+        date_from=date_from, 
+        date_to=date_to
     )
 
+    results = [
+        UnsubscribedEmailResponse.model_validate(item).model_dump(mode="json")
+        for item in all_items
+    ]
+
     if format == "csv":
-        return generate_csv_stream(data_iterator)
+        # Pass the concrete list to the generator
+        return generate_csv_stream(results)
     
     if format == "json":
-        # Convert iterator to list of dicts for JSON response
-        results = [
-            UnsubscribedEmailResponse.model_validate(item).model_dump()
-            for item in data_iterator
-        ]
         return generate_json_response(results)
+    
+    

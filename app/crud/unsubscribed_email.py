@@ -54,7 +54,7 @@ def get_unsubscribed_emails(
         query = query.filter(UnsubscribedEmail.inserted_at <= date_to)
 
     return (
-        query.order_by(UnsubscribedEmail.inserted_at.desc(), UnsubscribedEmail.id.desc())
+        query.order_by(UnsubscribedEmail.id.desc(), UnsubscribedEmail.id.desc())
         .offset(offset)
         .limit(limit)
         .all()
@@ -93,37 +93,3 @@ def count_unsubscribed_emails(
         query = query.filter(UnsubscribedEmail.inserted_at <= date_to)
 
     return query.count()
-
-def get_all_unsubscribed_emails(
-    db: Session,
-    *,
-    unsub_method: Optional[str] = None,
-    search: Optional[str] = None,
-    date_from: Optional[datetime] = None,
-    date_to: Optional[datetime] = None,
-) -> Iterable[UnsubscribedEmail]:
-    """
-    Retrieves all filtered unsubscribed emails using a generator.
-    """
-    query = db.query(UnsubscribedEmail)
-
-    if unsub_method:
-        query = query.filter(UnsubscribedEmail.unsub_method == unsub_method)
-    
-    if search:
-        search_term = f"%{search}%"
-        query = query.filter(
-            or_(
-                UnsubscribedEmail.sender_name.ilike(search_term),
-                UnsubscribedEmail.sender_email.ilike(search_term),
-            )
-        )
-
-    if date_from:
-        query = query.filter(UnsubscribedEmail.inserted_at >= date_from)
-
-    if date_to:
-        query = query.filter(UnsubscribedEmail.inserted_at <= date_to)
-
-    # Use yield_per for memory-efficient iteration
-    yield from query.order_by(UnsubscribedEmail.inserted_at.asc()).yield_per(100)

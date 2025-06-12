@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     DISCORD_WEBHOOK_URL: Optional[HttpUrl] = None
     BASIC_AUTH_USERNAME: str = "admin"
     BASIC_AUTH_PASSWORD: str = "password"
+    TEST_DATABASE_URL: Optional[str] = None
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS: int = 20
     RATE_LIMIT_AUTH_REQUESTS: int = 100

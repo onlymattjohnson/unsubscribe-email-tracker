@@ -1,32 +1,60 @@
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
-# Path fix may be needed if you removed it from other files
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from app.core.config import settings
+from app.main import app
+from app.core.database import Base, get_db
 
-from app.core.database import Base
+# Use the test database URL from our settings
+SQLALCHEMY_DATABASE_URL = settings.TEST_DATABASE_URL
+if not SQLALCHEMY_DATABASE_URL:
+    raise ValueError("TEST_DATABASE_URL environment variable is not set for testing.")
 
-# Use an in-memory SQLite database for fast, isolated tests.
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+# Create a new SQLAlchemy engine for testing
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Create a new SessionLocal class for testing that uses the test engine
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @pytest.fixture(scope="function")
-def db_session():
+def db_session() -> Session:
     """
-    Pytest fixture to create a new database session for each test function.
-    It creates all tables, yields a session, and then drops all tables.
+    This is the core fixture that provides a clean database state for each test.
+    - It drops and recreates all tables for every single test function.
+    - It yields a single session for the test to use.
     """
+    # Before the test runs, drop all tables and recreate them
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    session = TestingSessionLocal()
+
+    db = TestingSessionLocal()
     try:
-        yield session
+        yield db
     finally:
-        session.close()
-        Base.metadata.drop_all(bind=engine)
+        db.close()
+
+
+@pytest.fixture(scope="function")
+def test_client(db_session: Session) -> TestClient:
+    """
+    This fixture provides a TestClient that is configured to use the
+    isolated database session from the `db_session` fixture.
+    """
+    def override_get_db():
+        """This function will replace the original `get_db` dependency."""
+        try:
+            yield db_session
+        finally:
+            db_session.close()
+
+    # Apply the override
+    app.dependency_overrides[get_db] = override_get_db
+    
+    # Yield the configured client
+    yield TestClient(app)
+    
+    # Remove the override after the test is done
+    app.dependency_overrides.clear()
