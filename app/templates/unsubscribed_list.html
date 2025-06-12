@@ -4,9 +4,30 @@
 
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
         <h1>Unsubscribed Emails</h1>
-        <span class="badge bg-secondary rounded-pill">{{ total_count }} total</span>
+        <div class="btn-group">
+            <a href="{{ export_url_csv }}" class="btn btn-sm btn-outline-success">Export as CSV</a>
+            <a href="{{ export_url_json }}" class="btn btn-sm btn-outline-info">Export as JSON</a>
+        </div>
+    </div>
+
+    {% include 'components/filters.html' %}
+    
+    {% if current_filters.search or current_filters.unsub_method %}
+    <div class="active-filters-container mb-3">
+        <strong>Active Filters:</strong>
+        {% if current_filters.search %}
+            <span class="badge bg-warning text-dark">Search: "{{ current_filters.search }}"</span>
+        {% endif %}
+        {% if current_filters.unsub_method %}
+            <span class="badge bg-secondary">Method: {{ current_filters.unsub_method }}</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-end mb-2">
+        <span class="badge bg-secondary rounded-pill">Showing {{ items|length }} of {{ total_count }} total</span>
     </div>
 
     {% if items %}
@@ -38,11 +59,10 @@
             </tbody>
         </table>
     </div>
-    
+
     {% if total_pages > 1 %}
         {% include 'components/pagination.html' %}
     {% endif %}
-
     {% else %}
     <div class="text-center p-5 border rounded">
         <h3>No Records Found</h3>

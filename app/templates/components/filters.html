@@ -1,0 +1,22 @@
+<form class="filter-form" method="get">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label for="search" class="form-label">Search</label>
+            <input type="text" class="form-control" id="search" name="search" placeholder="Name or email..." value="{{ current_filters.search or '' }}">
+        </div>
+        <div class="col-md-3">
+            <label for="unsub_method" class="form-label">Method</label>
+            <select id="unsub_method" name="unsub_method" class="form-select">
+                <option value="" {% if not current_filters.unsub_method %}selected{% endif %}>All</option>
+                <option value="direct_link" {% if current_filters.unsub_method == 'direct_link' %}selected{% endif %}>Direct Link</option>
+                <option value="isp_level" {% if current_filters.unsub_method == 'isp_level' %}selected{% endif %}>ISP Level</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Search</button>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-outline-secondary w-100" id="clear-filters-btn">Clear</button>
+        </div>
+    </div>
+</form>
