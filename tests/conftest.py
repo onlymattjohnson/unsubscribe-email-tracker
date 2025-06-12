@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from app.core.config import settings
 from app.main import app
+from app.models import UnsubscribedEmail
 from app.core.database import Base, get_db
 
 # Use the test database URL from our settings
@@ -58,3 +59,15 @@ def test_client(db_session: Session) -> TestClient:
     
     # Remove the override after the test is done
     app.dependency_overrides.clear()
+
+@pytest.fixture(scope="function")
+def populated_db_for_web(db_session: Session):
+    """Fixture to create 50 records for pagination testing."""
+    records = [
+        UnsubscribedEmail(sender_name=f"Sender {i}", sender_email=f"s{i}@e.com", unsub_method="direct_link")
+        for i in range(50)
+    ]
+    db_session.add_all(records)
+    db_session.commit()
+    yield
+    # Cleanup is handled by conftest

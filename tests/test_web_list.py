@@ -12,18 +12,6 @@ from .test_web_auth import get_basic_auth_headers
 AUTH_HEADERS = get_basic_auth_headers(settings.BASIC_AUTH_USERNAME, settings.BASIC_AUTH_PASSWORD)
 LIST_URL = "/web/unsubscribed"
 
-@pytest.fixture(scope="function")
-def populated_db_for_web(db_session: Session):
-    """Fixture to create 50 records for pagination testing."""
-    records = [
-        UnsubscribedEmail(sender_name=f"Sender {i}", sender_email=f"s{i}@e.com", unsub_method="direct_link")
-        for i in range(50)
-    ]
-    db_session.add_all(records)
-    db_session.commit()
-    yield
-    # Cleanup is handled by conftest
-
 def test_list_view_empty_state(test_client: TestClient):
     """Test that the empty state message is shown."""
     response = test_client.get(LIST_URL, headers=AUTH_HEADERS)

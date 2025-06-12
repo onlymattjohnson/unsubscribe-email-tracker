@@ -1,5 +1,6 @@
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
+from typing import Optional
 
 # Initialize templates once
 templates = Jinja2Templates(directory="app/templates")

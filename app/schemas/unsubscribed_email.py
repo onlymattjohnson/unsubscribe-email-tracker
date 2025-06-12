@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 class UnsubscribedEmailCreate(BaseModel):
     sender_name: str = Field(..., min_length=1, max_length=255)
     sender_email: EmailStr
-    unsub_method: Literal["direct_link", "isp_level"]
+    unsub_method: Optional[Literal["direct_link", "isp_level"]] = None
 
 # Schema for reading an entry (output)
 class UnsubscribedEmailResponse(BaseModel):

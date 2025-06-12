@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Literal, Optional
-from fastapi import APIRouter, Depends, status, Query
+from typing import Literal, Optional, Union
+from fastapi import APIRouter, Depends, status, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core import get_db, log_event
@@ -50,16 +50,26 @@ async def list_unsubscribed_email_entries(
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
     # Filter params
-    unsub_method: Optional[Literal["direct_link", "isp_level"]] = Query(None),
+    # unsub_method: Optional[Union[Literal["direct_link", "isp_level"], Literal['']]] = Query(None),
+    unsub_method: Optional[str] = Query(None),
     search: Optional[str] = Query(None, min_length=1, max_length=100),
     date_from: Optional[datetime] = Query(None, description="ISO 8601 format: YYYY-MM-DDTHH:MM:SS"),
     date_to: Optional[datetime] = Query(None, description="ISO 8601 format: YYYY-MM-DDTHH:MM:SS"),
     # Auth
     token: str = Depends(require_api_auth),
+    request: Request
 ):
     """
     Retrieve a paginated and filtered list of unsubscribed email records.
     """
+    print("Raw query params: {request.url.query}")
+    print("filter typic received: {repr(unsub_method)}")
+    
+    if unsub_method == '':
+        unsub_method = None
+    elif unsub_method is not None and unsub_method not in ['direct_link', 'isp_level']:
+        raise HTTPException(422, f"Invalid unsub_method: {unsub_method}")
+
     items = crud.get_unsubscribed_emails(
         db=db, limit=limit, offset=offset, unsub_method=unsub_method,
         search=search, date_from=date_from, date_to=date_to
