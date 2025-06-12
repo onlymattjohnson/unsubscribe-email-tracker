@@ -4,7 +4,50 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="mb-4">Unsubscribed Emails</h1>
-    <p>This is where the list of unsubscribed emails will be displayed.</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Unsubscribed Emails</h1>
+        <span class="badge bg-secondary rounded-pill">{{ total_count }} total</span>
+    </div>
+
+    {% if items %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Sender Name</th>
+                    <th scope="col">Sender Email</th>
+                    <th scope="col">Method</th>
+                    <th scope="col">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.sender_name }}</td>
+                    <td>{{ item.sender_email }}</td>
+                    <td>
+                        {% if item.unsub_method == 'direct_link' %}
+                        <span class="badge bg-primary">Direct Link</span>
+                        {% else %}
+                        <span class="badge bg-info">ISP Level</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.inserted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if total_pages > 1 %}
+        {% include 'components/pagination.html' %}
+    {% endif %}
+
+    {% else %}
+    <div class="text-center p-5 border rounded">
+        <h3>No Records Found</h3>
+        <p>You haven't tracked any unsubscribed emails yet.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

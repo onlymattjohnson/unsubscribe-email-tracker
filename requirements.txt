@@ -15,3 +15,4 @@ email-validator
 python-json-logger
 anyio
 jinja2
+beautifulsoup4
