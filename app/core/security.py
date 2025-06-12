@@ -3,6 +3,8 @@ import secrets
 from typing import Callable
 
 from fastapi import Depends
+from fastapi.templating import Jinja2Templates
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
@@ -34,19 +36,23 @@ def verify_basic_auth(auth_header: str) -> bool:
     except Exception:
         return False
 
-
 class BasicAuthMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app):
+        super().__init__(app)
+        # We need a separate templates instance for the middleware
+        self.templates = Jinja2Templates(directory="app/templates")
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         if not request.url.path.startswith("/web/"):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
         if not auth_header or not verify_basic_auth(auth_header):
-            response = JSONResponse(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": "Not authorized"},
-                headers={"WWW-Authenticate": 'Basic realm="Web UI"'},
+            # Return an HTML response instead of JSON
+            response = self.templates.TemplateResponse(
+                request=request, name="login_required.html", status_code=status.HTTP_401_UNAUTHORIZED
             )
+            response.headers["WWW-Authenticate"] = 'Basic realm="Web UI"'
             return response
         
         return await call_next(request)

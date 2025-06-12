@@ -1,0 +1,10 @@
+/* Basic body styling for better defaults */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.main-container {
+    flex: 1;
+}
