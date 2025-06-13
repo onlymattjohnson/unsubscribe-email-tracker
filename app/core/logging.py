@@ -12,14 +12,20 @@ from app.models.log import Log
 logger = logging.getLogger(__name__)
 
 
-def get_logs(db: Session, limit: int, offset: int, source_app: Optional[str], log_level: Optional[str]) -> Tuple[List[Log], int]:
+def get_logs(
+    db: Session,
+    limit: int,
+    offset: int,
+    source_app: Optional[str],
+    log_level: Optional[str],
+) -> Tuple[List[Log], int]:
     """Retrieves a paginated and filtered list of logs from the database."""
     query = db.query(Log)
     if source_app:
         query = query.filter(Log.source_app == source_app)
     if log_level:
         query = query.filter(Log.log_level == log_level)
-    
+
     total = query.count()
     logs = query.order_by(Log.timestamp.desc()).limit(limit).offset(offset).all()
     return logs, total
@@ -75,13 +81,17 @@ async def log_event(
             )
         except Exception as log_err:
             # Last resort if even the logger fails
-            print(f"CRITICAL: Primary DB and structured logging have both failed. Error: {log_err}")
+            print(
+                f"CRITICAL: Primary DB and structured logging have both failed. Error: {log_err}"
+            )
 
         try:
             original_log_message = f"{log_level} | {source_app} | {message}"
             await _send_discord_alert(original_log_message, db_error)
         except Exception as alert_err:
-            print(f"CRITICAL: Discord alert failed after DB logging failure. Error: {alert_err}")
+            print(
+                f"CRITICAL: Discord alert failed after DB logging failure. Error: {alert_err}"
+            )
 
         return None
     finally:

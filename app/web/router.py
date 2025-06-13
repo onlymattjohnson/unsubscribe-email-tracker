@@ -18,6 +18,7 @@ from . import export as export_routes
 router = APIRouter()
 router.include_router(export_routes.router)
 
+
 def build_query_params(base_params: dict, new_params: dict) -> str:
     """Helper to build query strings, preserving existing filters."""
     updated_params = base_params.copy()
@@ -25,10 +26,12 @@ def build_query_params(base_params: dict, new_params: dict) -> str:
     # Filter out None values before encoding
     return urlencode({k: v for k, v in updated_params.items() if v is not None})
 
+
 @router.get("/")
 async def web_root():
     """Redirects the root of the web UI to the main list page."""
     return RedirectResponse(url="/web/unsubscribed")
+
 
 # --- EXISTING TEST ROUTE ---
 @router.get("/test/protected")
@@ -37,7 +40,9 @@ async def test_web_protected_endpoint():
     content = "<h1>Authenticated Web UI Endpoint</h1>"
     return HTMLResponse(content=content)
 
+
 ITEMS_PER_PAGE = 20
+
 
 @router.get("/unsubscribed")
 async def list_unsubscribed(
@@ -46,26 +51,31 @@ async def list_unsubscribed(
     templates: Jinja2Templates = Depends(get_templates),
     page: int = Query(1, ge=1),
     search: Optional[str] = Query(None, min_length=1, max_length=100),
-    unsub_method: Optional[Union[Literal["direct_link", "isp_level"], Literal[""]]] = Query(None),
+    unsub_method: Optional[
+        Union[Literal["direct_link", "isp_level"], Literal[""]]
+    ] = Query(None),
 ):
     """Displays the main page for unsubscribed emails with pagination and filters."""
     offset = (page - 1) * ITEMS_PER_PAGE
-    
+
     final_search = None if search == "" else search
     final_unsub_method = None if unsub_method == "" else unsub_method
 
     items = crud.get_unsubscribed_emails(
-        db=db, limit=ITEMS_PER_PAGE, offset=offset, 
-        search=final_search, unsub_method=final_unsub_method
+        db=db,
+        limit=ITEMS_PER_PAGE,
+        offset=offset,
+        search=final_search,
+        unsub_method=final_unsub_method,
     )
     total_count = crud.count_unsubscribed_emails(
         db=db, search=final_search, unsub_method=final_unsub_method
     )
-    
+
     total_pages = math.ceil(total_count / ITEMS_PER_PAGE) if total_count > 0 else 1
 
     current_filters = {"search": final_search, "unsub_method": final_unsub_method}
-    
+
     # Override the href in the pagination template by passing it in the context
     def pagination_url(page_num: int) -> str:
         # Pass the original query params to keep them in the URL
@@ -83,4 +93,6 @@ async def list_unsubscribed(
         "export_url_csv": f"/web/export?{build_query_params({'search': search, 'unsub_method': unsub_method}, {'format': 'csv'})}",
         "export_url_json": f"/web/export?{build_query_params({'search': search, 'unsub_method': unsub_method}, {'format': 'json'})}",
     }
-    return templates.TemplateResponse(request=request, name="unsubscribed_list.html", context=context)
+    return templates.TemplateResponse(
+        request=request, name="unsubscribed_list.html", context=context
+    )

@@ -6,6 +6,7 @@ from app.core.config import settings
 # Set auto_error=False to handle errors manually and return 401 instead of 403
 bearer_scheme = HTTPBearer(auto_error=False)
 
+
 async def get_current_token(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ) -> str:
@@ -17,6 +18,7 @@ async def get_current_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return credentials.credentials
+
 
 # The verify_token function remains the same.
 async def verify_token(token: str = Depends(get_current_token)):

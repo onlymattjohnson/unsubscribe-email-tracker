@@ -6,20 +6,19 @@ router = APIRouter()
 
 # Include the unsubscribed_emails endpoint router
 router.include_router(
-    unsubscribed_emails.router, 
-    prefix="/unsubscribed_emails", 
-    tags=["Unsubscribed Emails"]
+    unsubscribed_emails.router,
+    prefix="/unsubscribed_emails",
+    tags=["Unsubscribed Emails"],
 )
 
 # Add the export router under the same prefix
 router.include_router(
-    export.router,
-    prefix="/unsubscribed_emails",
-    tags=["Unsubscribed Emails"]
+    export.router, prefix="/unsubscribed_emails", tags=["Unsubscribed Emails"]
 )
 
 # Include other endpoint groups
 router.include_router(logging_router.router, prefix="/logs", tags=["Logging"])
+
 
 # Add a simple protected endpoint for testing purposes
 @router.get("/test/protected")

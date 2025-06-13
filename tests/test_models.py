@@ -3,11 +3,13 @@ from sqlalchemy.exc import IntegrityError
 
 # Path fix if needed
 import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.models import UnsubscribedEmail, Log
 
 # Note: The db_session fixture is now automatically provided by conftest.py
+
 
 def test_create_unsubscribed_email(db_session):
     """Test creating a valid UnsubscribedEmail instance."""
@@ -26,6 +28,7 @@ def test_create_unsubscribed_email(db_session):
     assert new_email.unsub_method == "direct_link"
     assert new_email.inserted_at is not None
 
+
 def test_unsubscribed_email_constraint(db_session):
     """Test the check constraint on unsub_method."""
     email_data = {
@@ -39,6 +42,7 @@ def test_unsubscribed_email_constraint(db_session):
     # We expect an IntegrityError because of the check constraint
     with pytest.raises(IntegrityError):
         db_session.commit()
+
 
 def test_create_log(db_session):
     """Test creating a valid Log instance."""

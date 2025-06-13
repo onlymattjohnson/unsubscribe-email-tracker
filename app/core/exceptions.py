@@ -6,20 +6,25 @@ from app.core.logging import log_event
 
 class DatabaseConnectionError(Exception):
     """Custom exception for database connection issues."""
+
     pass
 
 
 class AuthenticationError(Exception):
     """Custom exception for authentication failures."""
+
     pass
 
 
 class ValidationError(Exception):
     """Custom exception for validation errors."""
+
     pass
 
 
-async def db_connection_exception_handler(request: Request, exc: DatabaseConnectionError):
+async def db_connection_exception_handler(
+    request: Request, exc: DatabaseConnectionError
+):
     await log_event(
         source_app="api",
         log_level="CRITICAL",

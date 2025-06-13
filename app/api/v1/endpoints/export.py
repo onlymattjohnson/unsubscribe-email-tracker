@@ -11,6 +11,7 @@ from app.schemas.unsubscribed_email import UnsubscribedEmailResponse
 
 router = APIRouter()
 
+
 @router.get("/export")
 async def export_unsubscribed_email_entries(
     *,
@@ -21,7 +22,7 @@ async def export_unsubscribed_email_entries(
     search: Optional[str] = Query(None, min_length=1, max_length=100),
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
-    token: str = Depends(require_api_auth)
+    token: str = Depends(require_api_auth),
 ):
     """
     Export filtered unsubscribed email records as a CSV or JSON file.
@@ -29,13 +30,13 @@ async def export_unsubscribed_email_entries(
     # Use the existing paginated GET function with a high limit to get all records.
     # This is a pragmatic simplification for non-massive datasets.
     all_items = crud.get_unsubscribed_emails(
-        db=db, 
-        limit=1_000_000, # A very large number to act as "no limit"
-        offset=0, 
+        db=db,
+        limit=1_000_000,  # A very large number to act as "no limit"
+        offset=0,
         unsub_method=unsub_method,
-        search=search, 
-        date_from=date_from, 
-        date_to=date_to
+        search=search,
+        date_from=date_from,
+        date_to=date_to,
     )
 
     results = [
@@ -46,8 +47,6 @@ async def export_unsubscribed_email_entries(
     if format == "csv":
         # Pass the concrete list to the generator
         return generate_csv_stream(results)
-    
+
     if format == "json":
         return generate_json_response(results)
-    
-    

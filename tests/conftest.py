@@ -44,6 +44,7 @@ def test_client(db_session: Session) -> TestClient:
     This fixture provides a TestClient that is configured to use the
     isolated database session from the `db_session` fixture.
     """
+
     def override_get_db():
         """This function will replace the original `get_db` dependency."""
         try:
@@ -53,18 +54,23 @@ def test_client(db_session: Session) -> TestClient:
 
     # Apply the override
     app.dependency_overrides[get_db] = override_get_db
-    
+
     # Yield the configured client
     yield TestClient(app)
-    
+
     # Remove the override after the test is done
     app.dependency_overrides.clear()
+
 
 @pytest.fixture(scope="function")
 def populated_db_for_web(db_session: Session):
     """Fixture to create 50 records for pagination testing."""
     records = [
-        UnsubscribedEmail(sender_name=f"Sender {i}", sender_email=f"s{i}@e.com", unsub_method="direct_link")
+        UnsubscribedEmail(
+            sender_name=f"Sender {i}",
+            sender_email=f"s{i}@e.com",
+            unsub_method="direct_link",
+        )
         for i in range(50)
     ]
     db_session.add_all(records)

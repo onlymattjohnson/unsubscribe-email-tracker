@@ -1,0 +1,20 @@
+# Development dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Include all production dependencies
+-r requirements.txt
+
+# Testing
+pytest
+pytest-cov
+pytest-asyncio
+pytest-mock
+
+# Code formatting
+black
+
+# Optional but recommended dev tools
+# flake8>=6.1.0  # Linting
+# mypy>=1.5.0  # Type checking
+# ipdb>=0.13.13  # Better debugging
+# pre-commit>=3.3.3  # Git hooks for code quality

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, ConfigDict 
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -10,11 +10,13 @@ from app.core.logging import log_event, get_logs
 
 router = APIRouter()
 
+
 class LogCreate(BaseModel):
     source_app: str
     log_level: str
     message: str
     details_json: Optional[dict] = None
+
 
 class LogResponse(BaseModel):
     id: int
@@ -26,6 +28,7 @@ class LogResponse(BaseModel):
     inserted_by: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class PaginatedLogResponse(BaseModel):
     total: int
@@ -43,6 +46,7 @@ async def create_log_entry(log_in: LogCreate):
         details_json=log_in.details_json,
     )
     return {"status": "logged", "log_id": log_id}
+
 
 @router.get("", response_model=PaginatedLogResponse)
 def read_logs(

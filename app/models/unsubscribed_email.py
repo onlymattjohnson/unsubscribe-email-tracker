@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, TIMESTAMP, CheckConstraint
 from sqlalchemy.sql import func
 from app.core.database import Base
 
+
 class UnsubscribedEmail(Base):
     __tablename__ = "unsubscribed_emails"
 

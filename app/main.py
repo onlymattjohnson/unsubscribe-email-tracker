@@ -2,7 +2,7 @@ import asyncio, logging
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles 
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -10,8 +10,10 @@ from app.core import get_db, log_event
 from app.core.middleware.logging_middleware import LoggingMiddleware
 from app.core.logging_config import setup_logging
 from app.core.exceptions import (
-    DatabaseConnectionError, db_connection_exception_handler,
-    AuthenticationError, auth_exception_handler,
+    DatabaseConnectionError,
+    db_connection_exception_handler,
+    AuthenticationError,
+    auth_exception_handler,
 )
 from app.core.security import BasicAuthMiddleware, require_api_auth
 from app.core.rate_limit import RateLimiter, RateLimitMiddleware, cleanup_task
@@ -23,20 +25,27 @@ logger = logging.getLogger(__name__)
 
 rate_limiter = RateLimiter()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    setup_logging() 
-    
-    logger.info("Application startup: testing database connection...") # <-- This will now work
+    setup_logging()
+
+    logger.info(
+        "Application startup: testing database connection..."
+    )  # <-- This will now work
     db = None
     try:
         db = next(get_db())
         db.execute(text("SELECT 1"))
-        logger.info("Database connection successful.") # <-- Update this too
+        logger.info("Database connection successful.")  # <-- Update this too
         await log_event("api", "INFO", "Application started successfully.")
     except Exception as e:
-        logger.critical(f"Database connection failed on startup: {e}") # <-- Update to logger.critical
-        await log_event("api", "CRITICAL", f"Database connection failed on startup: {e}")
+        logger.critical(
+            f"Database connection failed on startup: {e}"
+        )  # <-- Update to logger.critical
+        await log_event(
+            "api", "CRITICAL", f"Database connection failed on startup: {e}"
+        )
         raise DatabaseConnectionError("Could not connect to the database on startup.")
     finally:
         if db:
@@ -44,9 +53,9 @@ async def lifespan(app: FastAPI):
 
     # Start the rate limiter cleanup task
     cleanup_bg_task = asyncio.create_task(cleanup_task(rate_limiter))
-    
+
     yield
-    
+
     logger.info("Application shutdown.")
     await log_event("api", "INFO", "Application shutting down.")
 
@@ -56,6 +65,7 @@ async def lifespan(app: FastAPI):
         await cleanup_bg_task
     except asyncio.CancelledError:
         print("Rate limiter cleanup task cancelled.")
+
 
 app = FastAPI(
     title="Unsubscribed Emails Tracker",
@@ -83,11 +93,13 @@ app.add_middleware(BasicAuthMiddleware)
 app.add_exception_handler(DatabaseConnectionError, db_connection_exception_handler)
 app.add_exception_handler(AuthenticationError, auth_exception_handler)
 
+
 # --- Routers ---
 @app.get("/")
 def root():
     """Root endpoint for basic service status."""
     return {"status": "ok", "service": "unsubscribed-emails-tracker"}
+
 
 # Add the health check endpoint here to make it public
 @app.get("/api/v1/health", tags=["Health"])
@@ -99,18 +111,15 @@ async def health_check(db: Session = Depends(get_db)):
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         raise DatabaseConnectionError(f"Health check failed: {e}")
-    
+
+
 # API Router (all routes will be protected by require_api_auth)
 app.include_router(
     api_v1_router,
     prefix="/api/v1",
     tags=["APIv1"],
-    dependencies=[Depends(require_api_auth)]
+    dependencies=[Depends(require_api_auth)],
 )
 
 # Web UI Router (routes are protected by BasicAuthMiddleware)
-app.include_router(
-    web_router,
-    prefix="/web",
-    tags=["Web"]
-)
+app.include_router(web_router, prefix="/web", tags=["Web"])

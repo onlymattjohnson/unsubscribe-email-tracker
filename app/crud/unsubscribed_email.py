@@ -6,7 +6,10 @@ from sqlalchemy import or_
 from app.models.unsubscribed_email import UnsubscribedEmail
 from app.schemas.unsubscribed_email import UnsubscribedEmailCreate
 
-def create_unsubscribed_email(db: Session, *, email_in: UnsubscribedEmailCreate) -> UnsubscribedEmail:
+
+def create_unsubscribed_email(
+    db: Session, *, email_in: UnsubscribedEmailCreate
+) -> UnsubscribedEmail:
     """
     Creates a new unsubscribed email record in the database.
     """
@@ -19,6 +22,7 @@ def create_unsubscribed_email(db: Session, *, email_in: UnsubscribedEmailCreate)
     db.commit()
     db.refresh(db_obj)
     return db_obj
+
 
 def get_unsubscribed_emails(
     db: Session,
@@ -38,10 +42,10 @@ def get_unsubscribed_emails(
     # --- DEBUGGING ---
     print(f"\nCRUD ARGS: unsub_method={unsub_method}, search={search}\n")
     # ---
-    
+
     if unsub_method:
         query = query.filter(UnsubscribedEmail.unsub_method == unsub_method)
-    
+
     if search:
         search_term = f"%{search}%"
         query = query.filter(
@@ -80,7 +84,7 @@ def count_unsubscribed_emails(
 
     if unsub_method:
         query = query.filter(UnsubscribedEmail.unsub_method == unsub_method)
-    
+
     if search:
         search_term = f"%{search}%"
         query = query.filter(

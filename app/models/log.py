@@ -3,6 +3,7 @@ from sqlalchemy import JSON
 from sqlalchemy.sql import func
 from app.core.database import Base
 
+
 class Log(Base):
     __tablename__ = "logs"
 
