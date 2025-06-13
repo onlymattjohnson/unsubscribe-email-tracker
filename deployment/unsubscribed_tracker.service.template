@@ -1,0 +1,25 @@
+[Unit]
+Description=Unsubscribed Tracker FastAPI Application
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=notify
+User=__USER__
+Group=__USER__
+WorkingDirectory=__PROJECT_PATH__
+ExecStart=__VENV_PATH__/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+EnvironmentFile=__PROJECT_PATH__/.env
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65536
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target
