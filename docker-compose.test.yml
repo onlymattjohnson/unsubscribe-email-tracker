@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  db_test:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=unsub_tracker_db_test
+    ports:
+      - "5433:5432" # Use a different host port to avoid conflict with local dev db
+
+  app_test:
+    build: .
+    depends_on:
+      - db_test
+    env_file:
+      - .env
+    command: ["pytest"]
