@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Popup Test Runner</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>body { padding: 2rem; width: 400px; margin: auto; }</style>
+</head>
+<body>
+    <h1>Popup Test Runner</h1>
+    <p>This page mocks the `chrome` API and the `fetch` API to test the popup's UI and logic.</p>
+    
+    <div id="popup-container">
+        <!-- Popup content will be loaded here -->
+    </div>
+    <hr>
+    <h3>Mock Controls</h3>
+    <button id="mock-success">Mock Success</button>
+    <button id="mock-fail-401">Mock 401 Unauthorized</button>
+    <button id="mock-fail-429">Mock 429 Rate Limit</button>
+    <button id="mock-fail-network">Mock Network Error</button>
+
+    <script>
+        // --- Mock chrome API ---
+        if (typeof chrome === 'undefined') window.chrome = {};
+        if (!chrome.storage) {
+            chrome.storage = {
+                local: {
+                    get: (keys, cb) => cb({ apiUrl: 'https://api.test.com', apiToken: 'valid-token' })
+                }
+            };
+        }
+        if (!chrome.runtime) {
+            chrome.runtime = { openOptionsPage: () => alert('Options page opened!') };
+        }
+    </script>
+
+    <script type="module">
+        // --- Mock fetch API ---
+        function mockFetch(status, body) {
+            window.fetch = async (url, options) => {
+                console.log('MOCK FETCH:', { url, options });
+                if (status === 'network-error') {
+                    throw new TypeError('Failed to fetch');
+                }
+                return {
+                    ok: status >= 200 && status < 300,
+                    status: status,
+                    json: async () => body
+                };
+            };
+        }
+        
+        // --- Control Buttons ---
+        document.getElementById('mock-success').addEventListener('click', () => mockFetch(201, { id: 123 }));
+        document.getElementById('mock-fail-401').addEventListener('click', () => mockFetch(401, { detail: 'Invalid token' }));
+        document.getElementById('mock-fail-429').addEventListener('click', () => mockFetch(429, { detail: 'Too many requests' }));
+        document.getElementById('mock-fail-network').addEventListener('click', () => mockFetch('network-error', {}));
+        
+        // --- Load Popup ---
+        fetch('../popup.html')
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('popup-container').innerHTML = html;
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = '../popup.js';
+                document.body.appendChild(script);
+                mockFetch(201, { id: 123 }); // Default to success
+            });
+    </script>
+</body>
+</html>
