@@ -1,4 +1,4 @@
-.PHONY: test format run migrate-create migrate-up migrate-down
+.PHONY: test format run migrate-create migrate-up migrate-down deploy backup logs
 
 test:
 	pytest
@@ -30,3 +30,15 @@ endif
 	@echo "Exporting JSON sample..."
 	@curl -s -H "Authorization: Bearer $(API_TOKEN)" "http://127.0.0.1:8000/api/v1/unsubscribed_emails/export?format=json" -o sample_export.json
 	@echo "Done. See sample_export.csv and sample_export.json"
+
+deploy:
+	@echo "Running deployment script..."
+	@./scripts/deploy.sh
+
+backup:
+	@echo "Running backup script..."
+	@sudo ./scripts/backup.sh
+
+logs:
+	@echo "Tailing application logs..."
+	@sudo journalctl -u unsubscribed_tracker -f

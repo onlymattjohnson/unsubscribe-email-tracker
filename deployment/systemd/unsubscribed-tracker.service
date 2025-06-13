@@ -1,0 +1,30 @@
+[Unit]
+Description=Unsubscribed Tracker FastAPI Application
+After=network.target
+
+[Service]
+# Replace 'your_user' with the actual non-root user you will run the app as
+User=your_user
+Group=your_user
+
+# The absolute path to your project directory
+# Example: /home/your_user/unsub-tracker
+WorkingDirectory=/path/to/your/project
+
+# Command to start the app
+# The --host and --port should match what Nginx proxies to
+ExecStart=/path/to/your/project/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+# Required for uvicorn to receive signals from systemd
+StandardOutput=journal
+StandardError=inherit
+
+# Restart policy
+Restart=always
+RestartSec=5
+
+# Environment file
+EnvironmentFile=/path/to/your/project/.env
+
+[Install]
+WantedBy=multi-user.target
