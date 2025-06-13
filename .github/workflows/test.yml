@@ -28,7 +28,7 @@ jobs:
         echo "BASIC_AUTH_PASSWORD=test-password" >> .env
 
     - name: Run tests with Docker Compose
-      run: docker-compose -f docker-compose.test.yml up --build --exit-code-from app_test
+      run: docker compose -f docker-compose.test.yml up --build --exit-code-from app_test
 
     - name: Check code formatting with Black
       run: |
