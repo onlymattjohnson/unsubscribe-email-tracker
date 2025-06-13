@@ -126,3 +126,33 @@ button:disabled {
     color: #055160;
     border: 1px solid #b6effb;
 }
+
+.header-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.header-container h1 {
+    margin: 0;
+}
+
+#refresh-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0 0.5rem;
+    line-height: 1;
+}
+
+#refresh-btn:hover {
+    color: #212529;
+}
