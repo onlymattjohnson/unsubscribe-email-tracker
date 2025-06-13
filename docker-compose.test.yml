@@ -12,7 +12,9 @@ services:
       - "5433:5432" # Use a different host port to avoid conflict with local dev db
 
   app_test:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     depends_on:
       - db_test
     env_file:
