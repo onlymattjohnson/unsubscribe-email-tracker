@@ -15,7 +15,11 @@
             <input type="email" id="sender-email" required>
         </div>
         <div class="form-group">
-            <!-- ... radio buttons ... -->
+            <label>Method</label>
+            <div class="radio-group">
+                <label><input type="radio" name="unsub-method" value="direct_link" checked> Direct Link</label>
+                <label><input type="radio" name="unsub-method" value="isp_level"> ISP Level</label>
+            </div>
         </div>
         <div class="button-container">
             <button type="submit" id="submit-btn">Track It</button>

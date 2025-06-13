@@ -10,6 +10,17 @@ const optionsLink = document.getElementById('options-link');
  */
 async function handleSubmit(event) {
     event.preventDefault();
+    
+    // Find the selected radio button
+    const unsubMethodElement = document.querySelector('input[name="unsub-method"]:checked');
+
+    // --- THIS IS THE FIX ---
+    if (!unsubMethodElement) {
+        ui.showMessage('Please select an unsubscribe method.', 'error');
+        return; // Stop execution if no method is selected
+    }
+    // --- END FIX ---
+
     if (!form.checkValidity()) {
         ui.showMessage('Please fill out all required fields.', 'error');
         return;
@@ -26,7 +37,8 @@ async function handleSubmit(event) {
         const payload = {
             sender_name: document.getElementById('sender-name').value,
             sender_email: document.getElementById('sender-email').value,
-            unsub_method: document.querySelector('input[name="unsub-method"]:checked').value,
+            // Now we can safely access .value because we know the element exists
+            unsub_method: unsubMethodElement.value,
         };
 
         const data = await createUnsubscribedEmail(apiUrl, apiToken, payload);
