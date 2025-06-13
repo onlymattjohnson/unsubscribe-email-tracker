@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Literal, Optional, Union
-from fastapi import APIRouter, Depends, status, Query, Request
+from fastapi import APIRouter, Depends, status, Query, Request, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core import get_db, log_event
@@ -24,20 +24,38 @@ async def create_unsubscribed_email_entry(
     """
     Create a new record for an unsubscribed email.
     """
-    created_email = crud.create_unsubscribed_email(db=db, email_in=email_in)
-    
-    await log_event(
-        source_app="api",
-        log_level="INFO",
-        message="Unsubscribed email record created.",
-        details_json={
-            "created_id": created_email.id,
-            "sender_email": created_email.sender_email,
-        },
-        inserted_by="api_token" # Don't log the token itself
-    )
-    
-    return created_email
+    try:
+        created_email = crud.create_unsubscribed_email(db=db, email_in=email_in)
+        
+        await log_event(
+            source_app="api",
+            log_level="INFO",
+            message="Unsubscribed email record created.",
+            details_json={
+                "created_id": created_email.id,
+                "sender_email": created_email.sender_email,
+            },
+            inserted_by="api_token" # Don't log the token itself
+        )
+        
+        return created_email
+    except Exception as e:
+        # The database session will automatically rollback on exception
+        # when using FastAPI's dependency injection
+        await log_event(
+            source_app="api",
+            log_level="ERROR",
+            message=f"Failed to create unsubscribed email record: {str(e)}",
+            details_json={
+                "sender_email": email_in.sender_email,
+                "error": str(e)
+            },
+            inserted_by="api_token"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create unsubscribed email record"
+        )
 
 @router.get(
     "/",
