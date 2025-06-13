@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Options Page Test Runner</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>body { padding: 2rem; width: 600px; margin: auto; }</style>
+</head>
+<body>
+    <h1>Options Page Test Runner</h1>
+    <p>This page mocks the `chrome.storage` API to allow for manual testing of the options page logic in a standard browser tab.</p>
+    <div id="options-container">
+        <!-- The options page content will be loaded here -->
+    </div>
+
+    <script>
+        // --- Mock chrome API ---
+        if (typeof chrome === 'undefined') {
+            window.chrome = {};
+        }
+        if (!chrome.storage) {
+            let mockStorage = {};
+            chrome.storage = {
+                local: {
+                    get: (keys, callback) => {
+                        const result = {};
+                        const defaultKeys = Array.isArray(keys) ? keys : Object.keys(keys);
+                        for (const key of defaultKeys) {
+                            result[key] = mockStorage[key] || (keys[key] || undefined);
+                        }
+                        console.log('MOCK GET:', result);
+                        callback(result);
+                    },
+                    set: (items, callback) => {
+                        console.log('MOCK SET:', items);
+                        Object.assign(mockStorage, items);
+                        if (callback) callback();
+                    }
+                }
+            };
+        }
+        if (!chrome.runtime) {
+            chrome.runtime = {};
+        }
+    </script>
+    
+    <script>
+        // --- Load options.html content into the page ---
+        fetch('../options.html')
+            .then(response => response.text())
+            .then(html => {
+                const container = document.getElementById('options-container');
+                container.innerHTML = html;
+                
+                // Manually load the script after the HTML is in the DOM
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = '../options.js';
+                document.body.appendChild(script);
+            });
+    </script>
+</body>
+</html>
