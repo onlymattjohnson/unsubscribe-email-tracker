@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Extension E2E Test Runner</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body { width: 800px; margin: 2rem auto; }
+        pre { background-color: #f8f9fa; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Extension Logic Test Runner</h1>
+    <p>This page tests the core `storage.js` and `api.js` modules. Make sure your API server is running and your extension options are configured correctly before running.</p>
+    <button id="run-tests-btn">Run All Tests</button>
+    <pre id="results"></pre>
+
+    <script type="module" src="e2e-test.js"></script>
+</body>
+</html>

@@ -51,7 +51,20 @@ export async function createUnsubscribedEmail(apiUrl, apiToken, payload) {
     if (!response.ok) {
         // If the response is not ok, create a structured error object
         const errorData = await response.json().catch(() => ({ detail: 'Failed to parse error response.' }));
-        const error = new Error(errorData.detail || `HTTP Error: ${response.status}`);
+        
+        // Create a readable error message
+        let errorMessage = `HTTP Error: ${response.status}`;
+        if (errorData.detail) {
+            if (Array.isArray(errorData.detail)) {
+                // Handle validation errors (array of error objects)
+                const messages = errorData.detail.map(err => err.msg || err.message || 'Validation error');
+                errorMessage = messages.join(', ');
+            } else if (typeof errorData.detail === 'string') {
+                errorMessage = errorData.detail;
+            }
+        }
+        
+        const error = new Error(errorMessage);
         error.status = response.status;
         error.data = errorData;
         throw error;

@@ -9,7 +9,9 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://mail.google.com/*"
+    "https://mail.google.com/*",
+    "http://localhost/*",
+    "https://localhost/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -27,6 +29,12 @@
     "page": "options.html",
     "open_in_tab": true
   },
+  "web_accessible_resources": [
+    {
+      "resources": ["test/e2e-runner.html", "test/e2e-test.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "browser_specific_settings": {
     "gecko": {
       "id": "unsub-tracker@example.com"
